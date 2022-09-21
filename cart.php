@@ -1,6 +1,41 @@
 <?php 
 
 session_start();
+require_once("connect.php");
+
+
+
+
+if(isset($_POST['remove'])){
+
+    if(isset($_SESSION['cart'])){
+
+        $selectQuery = "select * from producttb";
+
+        $query = mysqli_query($conn,$selectQuery);
+
+        $rows = mysqli_num_rows($query);
+
+        while($result = mysqli_fetch_assoc($query)){
+
+            foreach($_SESSION['cart'] as $key => $value){
+
+               if($value['product_id'] == $_POST['product_id']){
+
+                 unset($_SESSION['cart'][$key]);
+                 $_SESSION['cart'] = array_values($_SESSION['cart']);
+
+                 echo "
+                    <script> 
+                    alert('Product is Removed from Cart...!');
+                    window.location.href = 'cart.php';
+                    </script>
+                 ";
+               }
+            }
+        }
+    }
+}
 
 
 ?>
@@ -41,52 +76,65 @@ session_start();
                 <thead>
                     <tr>
                         <th>Sr.no</th>
-                        <th>Product Name</th>
+                        <th>Product</th>
+                        <th>Name</th>
                         <th>Price</th>
                         <th>Quantity</th>
-                        <th>SubTotal</th>
+                        <th> SubTotal</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                      
-                    <?php
-                        
-                        $i = 1;
-            
-                        if(isset($_SESSION['cart'])){
 
-                            foreach($_SESSION['cart'] as $key => $value){
+                 <?php
 
+                  $i = 1;
+
+                  if(isset($_SESSION['cart'])){
+
+                     $product_id = array_column($_SESSION['cart'],'product_id');
+
+                     $selectQuery = "select * from producttb";
+
+                     $query = mysqli_query($conn,$selectQuery);
+
+                     $rows = mysqli_num_rows($query);
+
+                     while($result = mysqli_fetch_assoc($query)){
+
+                        foreach($product_id as $id){
+
+                            if($result['id'] == $id){
+
+
+                                ?>
+
+                                    <tr>
+                                    <form action="cart.php" method="post">
+                                        <td><?php echo $i++; ?></td>
+                                        <td><img src="<?php echo $result['product_img']; ?>"></td>
+                                        <td><?php echo $result['product_name'];?></td>
+                                        <td>$<?php echo $result['product_price'];?><input type="hidden" class="iprice" value="<?php echo $result['product_price'];?>"></td>
+                                        <td><input type="number" class="iquantity" onchange="subTotal()" value="1" min="1" max= "10"></td>
+                                        <td class="itotal"></td>
+                                        <td>
+                                            <button class="danger-btn"name="remove">Remove </button>
+                                            <input type="hidden" name="product_id" value="<?php echo $result['id']; ?>" >
+                                        </td>
+                                    </form>
+                                    <tr>
                                 
 
-                            ?>
-                                    <tr>
-                                        <td><?php echo $i++; ?></td>
-                                        <td><?php echo $value['ProductName']; ?></td>
-
-                                        <td>$<?php echo $value['ProductPrice']; ?><input type='hidden' class='iprice' value='<?php echo $value['ProductPrice']; ?>'></td>
-
-                                        <td><input type='number' class='iquantity' onchange="subTotal()" value='1' min='1' max= '10'></td>
-
-                                        <td class='itotal'></td>
-
-                                        <td>
-                                          <form action="manage_cart.php" method="post">
-                                            <button class='danger-btn'name='remove'>Remove </button>
-                                            <input type='hidden' name='ProductName' value='<?php echo $value['ProductName']; ?>'>
-                                          </form>
-                                        </td>
-
-                                    <tr>
 
                                 <?php
 
+
                             }
 
-                        }else{
-                                
+                        }                       
 
+                     }
+                  }else{
                     ?>
 
                     <tr>
@@ -94,9 +142,7 @@ session_start();
                     </tr>
 
                     <?php
-
-                        }
-                  
+                  }
                  ?>
                 </tbody>
             </table>
@@ -109,16 +155,15 @@ session_start();
                     <hr>
                     <div class="price-details">
                         <div class="price1">
+                            <?php
 
-                        <?php
-
-                        if(isset($_SESSION['cart'])){
-                          $count = count($_SESSION['cart']);
-                          echo "<h6>Price($count items)</h6>";
-                        }else{
-                          echo "<h6>Price(0 items)</h6>";
-                        }
-                        ?>
+                              if(isset($_SESSION['cart'])){
+                                $count = count($_SESSION['cart']);
+                                echo "<h6>Price($count items)</h6>";
+                              }else{
+                                echo "<h6>Price(0 items)</h6>";
+                              }
+                            ?>
 
                             <h6> Delivery Charges </h6>
                             <hr>
@@ -126,7 +171,7 @@ session_start();
 
                         </div>
                         <div class="price2">
-                            <h6 id="gtotal"></h6>
+                            <h6 id = "gtotal"></h6>
                             <h6> FREE </h6>
                             <hr>
                             <h6></h6>
@@ -140,7 +185,7 @@ session_start();
                                 <input type="radio" name="pay" value="online" checked> Online Payment
                             </div>
                             <br>
-                            <button class="btn"> Checkout </button>
+                            <button class="btn"> Checkout Now </button>
                         </from>
 
                 </div>
@@ -149,7 +194,8 @@ session_start();
         </div>
      </div>
 
-    <script>
+
+     <script>
 
         var gt = 0;
         var iprice = document.getElementsByClassName('iprice');
@@ -173,8 +219,8 @@ session_start();
         }
 
         subTotal();
-
-    </script>
+        
+     </script>
 
 
     </body>
